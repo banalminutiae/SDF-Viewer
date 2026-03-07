@@ -11,10 +11,14 @@
 
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
 {
-    switch (message)
-    {
-        case WM_DESTROY:
-            PostQuitMessage(0);
+    switch (message) {
+	    case WM_KEYDOWN:
+	        if (w_param == VK_ESCAPE) {
+    		    PostQuitMessage(0);
+		        return 0;
+	        }
+	    case WM_DESTROY:
+		    PostQuitMessage(0);
             return 0;
     }
 
@@ -26,7 +30,7 @@ BOOL init_app(HINSTANCE instance) {
 	wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = window_proc;
 	wc.hInstance = instance;
-	wc.hCursor = LoadCursor (NULL, IDC_ARROW);
+	wc.hCursor = LoadCursor (nullptr, IDC_ARROW);
 	wc.lpszClassName = "WindowClass";
 
 	return RegisterClass(&wc);	
@@ -77,7 +81,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	ID3D11Device *device;
     ID3D11DeviceContext *devicecontext;
 
-	HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT, featurelevels, ARRAYSIZE(featurelevels), D3D11_SDK_VERSION, &swapchaindesc, &swapchain, &device, nullptr, &devicecontext);
+	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT, featurelevels, ARRAYSIZE(featurelevels), D3D11_SDK_VERSION, &swapchaindesc, &swapchain, &device, nullptr, &devicecontext);
 
 	swapchain->GetDesc(&swapchaindesc);
 
@@ -92,7 +96,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
 
-	ID3DBlob *vs_blob = NULL, *ps_blob = NULL, *err_blob = NULL;
+	ID3DBlob *vs_blob = nullptr, *ps_blob = nullptr, *err_blob = nullptr;
 	HRESULT vs_hr = D3DCompileFromFile(
         L"shaders.hlsl",
         nullptr,
@@ -127,13 +131,13 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		if (ps_blob) ps_blob->Release();
 	}
 
-	ID3D11VertexShader *vertex_shader = NULL;
-	ID3D11PixelShader *pixel_shader = NULL;
+	ID3D11VertexShader *vertex_shader = nullptr;
+	ID3D11PixelShader *pixel_shader = nullptr;
 
-	device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), NULL, &vertex_shader);
-	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), NULL, &pixel_shader);
+	device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr, &vertex_shader);
+	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr, &pixel_shader);
 
-	ID3D11InputLayout* input_layout = NULL;
+	ID3D11InputLayout* input_layout = nullptr;
 	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
 		{ "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		/*
@@ -157,14 +161,14 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	UINT vertex_offset = 0;
 	UINT vertex_count = 3;
 
-	ID3D11Buffer *vertex_buffer = NULL;
+	ID3D11Buffer *vertex_buffer = nullptr;
 	{
-		D3D11_BUFFER_DESC vertex_bd = {};
+		D3D11_BUFFER_DESC vertex_bd = {0};
 		vertex_bd.ByteWidth = sizeof(vertex_data);
 		vertex_bd.Usage = D3D11_USAGE_DEFAULT;
 		vertex_bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
-		D3D11_SUBRESOURCE_DATA sr_data          = { 0 };
+		D3D11_SUBRESOURCE_DATA sr_data          = {0};
 		sr_data.pSysMem                         = vertex_data;
 		device->CreateBuffer(&vertex_bd, &sr_data, &vertex_buffer);
 	}
@@ -185,26 +189,24 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		TranslateMessage(&message);
 		DispatchMessage(&message);
 
-		{
-			float background_colour[4] = { 0x64 / 255.0f, 0x95 / 255.0f, 0xED / 255.0f, 1.0f };
-			devicecontext->ClearRenderTargetView(render_target_view, background_colour );
+		float background_colour[4] = { 0x64 / 255.0f, 0x95 / 255.0f, 0xED / 255.0f, 1.0f };
+		devicecontext->ClearRenderTargetView(render_target_view, background_colour );
 
-			D3D11_VIEWPORT viewport = { 0, 0, (float)swapchaindesc.BufferDesc.Width, (float)swapchaindesc.BufferDesc.Height, 0, 1 };
-			devicecontext->RSSetViewports(1, &viewport);
+		D3D11_VIEWPORT viewport = { 0, 0, (float)swapchaindesc.BufferDesc.Width, (float)swapchaindesc.BufferDesc.Height, 0, 1 };
+		devicecontext->RSSetViewports(1, &viewport);
 
-			devicecontext->OMSetRenderTargets(1, &render_target_view, NULL);
+		devicecontext->OMSetRenderTargets(1, &render_target_view, nullptr);
 
-			devicecontext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			devicecontext->IASetInputLayout(input_layout);
-			devicecontext->IASetVertexBuffers(0, 1, &vertex_buffer, &vertex_stride, &vertex_offset);
+		devicecontext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		devicecontext->IASetInputLayout(input_layout);
+		devicecontext->IASetVertexBuffers(0, 1, &vertex_buffer, &vertex_stride, &vertex_offset);
 
-			devicecontext->VSSetShader(vertex_shader, NULL, 0);
-			devicecontext->PSSetShader(pixel_shader, NULL, 0);
+		devicecontext->VSSetShader(vertex_shader, nullptr, 0);
+		devicecontext->PSSetShader(pixel_shader, nullptr, 0);
 
-			devicecontext->Draw(vertex_count, 0);
+		devicecontext->Draw(vertex_count, 0);
 
-			swapchain->Present(1, 0);
-		}
+		swapchain->Present(1, 0);
 	}
 	return 0;
 }
