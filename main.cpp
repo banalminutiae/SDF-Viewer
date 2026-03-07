@@ -81,12 +81,71 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 	swapchain->GetDesc(&swapchaindesc);
 
-	ID311RenderTargetView* render_target_view_ptr;
+	ID3D11RenderTargetView* render_target_view;
 	ID3D11Texture2D *framebuffer;
 
 	swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&framebuffer);
 
-	device->CreateRenderTargetView(framebuffer, nullptr, &render_target_view_tr);
+	device->CreateRenderTargetView(framebuffer, nullptr, &render_target_view);
+
+	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
+
+	//////////////////////////////////////////////////////////////////////////
+
+	ID3DBlob *vs_blob = NULL, *ps_blob = NULL, *err_blob = NULL;
+	HRESULT vs_hr = D3DCompileFromFile(
+        L"shaders.hlsl",
+        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "vs_main",
+        "vs_5_0",
+        flags,
+        0,
+        &vs_blob,
+        &err_blob
+    );
+
+	if (FAILED(vs_hr)) {
+		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
+		if (vs_blob) vs_blob->Release();
+	}
+	
+	HRESULT ps_hr = D3DCompileFromFile(
+        L"shaders.hlsl",
+        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "ps_main",
+        "ps_5_0",
+        flags,
+        0,
+        &ps_blob,
+        &err_blob
+    );
+
+	if (FAILED(ps_hr)) {
+		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
+		if (ps_blob) ps_blob->Release();
+	}
+
+	ID3D11VertexShader *vertex_shader = NULL;
+	ID3D11PixelShader *pixel_shader = NULL;
+
+	device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), NULL, &vertex_shader);
+	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), NULL, &pixel_shader);
+
+	ID3D11InputLayout* input_layout = NULL;
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+		{ "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		/*
+		  { "COL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		  { "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		  { "TEX", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		*/
+	};
+
+	device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &input_layout);
+	
+	//////////////////////////////////////////////////////////////////////////
 
 	MSG message;
 	for (;;) {
@@ -97,6 +156,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		TranslateMessage(&message);
 		DispatchMessage(&message);
 	}
-	
+	if (FAILED(hr)) {
+		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
+		if (ps_blob) vs_blob->Release();
+	}
 	return 0;
 }
