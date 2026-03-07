@@ -88,9 +88,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 	device->CreateRenderTargetView(framebuffer, nullptr, &render_target_view);
 
-	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
-
 	//////////////////////////////////////////////////////////////////////////
+
+	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
 
 	ID3DBlob *vs_blob = NULL, *ps_blob = NULL, *err_blob = NULL;
 	HRESULT vs_hr = D3DCompileFromFile(
@@ -147,6 +147,35 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	
 	//////////////////////////////////////////////////////////////////////////
 
+	float vertex_data[] = {
+		0.0f,  0.5f,  0.0f, // point at top
+		0.5f, -0.5f,  0.0f, // point at bottom-right
+		-0.5f, -0.5f,  0.0f, // point at bottom-left
+	};
+
+	UINT vertex_stride = 3 * sizeof( float );
+	UINT vertex_offset = 0;
+	UINT vertex_count = 3;
+
+	ID3D11Buffer *vertex_buffer = NULL;
+	{
+		D3D11_BUFFER_DESC vertex_bd = {};
+		vertex_bd.ByteWidth = sizeof(vertex_data);
+		vertex_bd.Usage = D3D11_USAGE_DEFAULT;
+		vertex_bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+		D3D11_SUBRESOURCE_DATA sr_data          = { 0 };
+		sr_data.pSysMem                         = vertex_data;
+		device->CreateBuffer(&vertex_bd, &sr_data, &vertex_buffer);
+	}
+
+	D3D11_RASTERIZER_DESC rasterizerdesc = { D3D11_FILL_SOLID, D3D11_CULL_NONE }; 
+
+    ID3D11RasterizerState* rasterizerstate;
+
+    device->CreateRasterizerState(&rasterizerdesc, &rasterizerstate);
+
+
 	MSG message;
 	for (;;) {
 		BOOL result = GetMessage(&message, 0, 0, 0);
@@ -155,10 +184,27 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		}
 		TranslateMessage(&message);
 		DispatchMessage(&message);
-	}
-	if (FAILED(hr)) {
-		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
-		if (ps_blob) vs_blob->Release();
+
+		{
+			float background_colour[4] = { 0x64 / 255.0f, 0x95 / 255.0f, 0xED / 255.0f, 1.0f };
+			devicecontext->ClearRenderTargetView(render_target_view, background_colour );
+
+			D3D11_VIEWPORT viewport = { 0, 0, (float)swapchaindesc.BufferDesc.Width, (float)swapchaindesc.BufferDesc.Height, 0, 1 };
+			devicecontext->RSSetViewports(1, &viewport);
+
+			devicecontext->OMSetRenderTargets(1, &render_target_view, NULL);
+
+			devicecontext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			devicecontext->IASetInputLayout(input_layout);
+			devicecontext->IASetVertexBuffers(0, 1, &vertex_buffer, &vertex_stride, &vertex_offset);
+
+			devicecontext->VSSetShader(vertex_shader, NULL, 0);
+			devicecontext->PSSetShader(pixel_shader, NULL, 0);
+
+			devicecontext->Draw(vertex_count, 0);
+
+			swapchain->Present(1, 0);
+		}
 	}
 	return 0;
 }
