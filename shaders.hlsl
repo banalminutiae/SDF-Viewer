@@ -24,13 +24,19 @@ float4 ps_main(vs_out input) : SV_TARGET {
     return input.col;
 }
 
-/*
-float4 VsMain(uint id : SV_VertexID) : SV_POSITION
-{
-    float2 uv = float2((id << 1) & 2, id & 2);
-    return float4(uv * float2(2, -2) + float2(-1, 1), 0, 1);
-}
 
+
+// float4 VsMain(uint id : SV_VertexID) : SV_POSITION
+// {
+//     float2 uv = float2((id << 1) & 2, id & 2);
+//     return float4(uv * float2(2, -2) + float2(-1, 1), 0, 1);
+// }
+
+// float4 ps_main(vs_out input) : SV_TARGET {
+//     return input.col;
+// }
+
+/*
 | id | (id << 1) & 2 | id & 2 | uv    |
 | -- | ------------- | ------ | ----- |
 | 0  | 0             | 0      | (0,0) |
@@ -45,5 +51,4 @@ uv * float2(2,-2) + float2(-1,1)
 | (2,0) | (3, 1)        |
 | (0,2) | (-1,-3)       |
 
-
- */
+*/

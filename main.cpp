@@ -139,40 +139,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	ID3D11InputLayout* input_layout = nullptr;
 	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
 		{ "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		/*
-		  { "COL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		  { "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		  { "TEX", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		*/
 	};
 
-	// device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &input_layout);
-	
 	//////////////////////////////////////////////////////////////////////////
-
-	if (0) {
-		float vertex_data[] = {
-			0.0f,  0.5f,  0.0f, // point at top
-			0.5f, -0.5f,  0.0f, // point at bottom-right
-			-0.5f, -0.5f,  0.0f, // point at bottom-left
-		};
-
-		UINT vertex_stride = 3 * sizeof( float );
-		UINT vertex_offset = 0;
-		UINT vertex_count = 3;
-
-		ID3D11Buffer *vertex_buffer = nullptr;
-		{
-			D3D11_BUFFER_DESC vertex_bd = {0};
-			vertex_bd.ByteWidth = sizeof(vertex_data);
-			vertex_bd.Usage = D3D11_USAGE_DEFAULT;
-			vertex_bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-			D3D11_SUBRESOURCE_DATA sr_data          = {0};
-			sr_data.pSysMem                         = vertex_data;
-			device->CreateBuffer(&vertex_bd, &sr_data, &vertex_buffer);
-		}
-	}
 
 	D3D11_RASTERIZER_DESC rasterizerdesc = { D3D11_FILL_SOLID, D3D11_CULL_NONE }; 
 
@@ -199,8 +168,6 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		devicecontext->OMSetRenderTargets(1, &render_target_view, nullptr);
 
 		devicecontext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		// devicecontext->IASetInputLayout(input_layout);
-		// devicecontext->IASetVertexBuffers(0, 1, &vertex_buffer, &vertex_stride, &vertex_offset);
 		devicecontext->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
 
 		devicecontext->VSSetShader(vertex_shader, nullptr, 0);
@@ -212,4 +179,3 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	}
 	return 0;
 }
-
