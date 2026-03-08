@@ -59,7 +59,6 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	if (window_handle) {
 		ShowWindow(window_handle, show_code);
 	}
-
 	
 	//////////////////////////////////////////////////////////////////////////
 
@@ -147,30 +146,32 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		*/
 	};
 
-	device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &input_layout);
+	// device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &input_layout);
 	
 	//////////////////////////////////////////////////////////////////////////
 
-	float vertex_data[] = {
-		0.0f,  0.5f,  0.0f, // point at top
-		0.5f, -0.5f,  0.0f, // point at bottom-right
-		-0.5f, -0.5f,  0.0f, // point at bottom-left
-	};
+	if (0) {
+		float vertex_data[] = {
+			0.0f,  0.5f,  0.0f, // point at top
+			0.5f, -0.5f,  0.0f, // point at bottom-right
+			-0.5f, -0.5f,  0.0f, // point at bottom-left
+		};
 
-	UINT vertex_stride = 3 * sizeof( float );
-	UINT vertex_offset = 0;
-	UINT vertex_count = 3;
+		UINT vertex_stride = 3 * sizeof( float );
+		UINT vertex_offset = 0;
+		UINT vertex_count = 3;
 
-	ID3D11Buffer *vertex_buffer = nullptr;
-	{
-		D3D11_BUFFER_DESC vertex_bd = {0};
-		vertex_bd.ByteWidth = sizeof(vertex_data);
-		vertex_bd.Usage = D3D11_USAGE_DEFAULT;
-		vertex_bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		ID3D11Buffer *vertex_buffer = nullptr;
+		{
+			D3D11_BUFFER_DESC vertex_bd = {0};
+			vertex_bd.ByteWidth = sizeof(vertex_data);
+			vertex_bd.Usage = D3D11_USAGE_DEFAULT;
+			vertex_bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
-		D3D11_SUBRESOURCE_DATA sr_data          = {0};
-		sr_data.pSysMem                         = vertex_data;
-		device->CreateBuffer(&vertex_bd, &sr_data, &vertex_buffer);
+			D3D11_SUBRESOURCE_DATA sr_data          = {0};
+			sr_data.pSysMem                         = vertex_data;
+			device->CreateBuffer(&vertex_bd, &sr_data, &vertex_buffer);
+		}
 	}
 
 	D3D11_RASTERIZER_DESC rasterizerdesc = { D3D11_FILL_SOLID, D3D11_CULL_NONE }; 
@@ -178,7 +179,6 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
     ID3D11RasterizerState* rasterizerstate;
 
     device->CreateRasterizerState(&rasterizerdesc, &rasterizerstate);
-
 
 	MSG message;
 	for (;;) {
@@ -189,24 +189,27 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		TranslateMessage(&message);
 		DispatchMessage(&message);
 
-		float background_colour[4] = { 0x64 / 255.0f, 0x95 / 255.0f, 0xED / 255.0f, 1.0f };
-		devicecontext->ClearRenderTargetView(render_target_view, background_colour );
+		D3D11_TEXTURE2D_DESC fb_desc;
+		framebuffer->GetDesc(&fb_desc);
 
-		D3D11_VIEWPORT viewport = { 0, 0, (float)swapchaindesc.BufferDesc.Width, (float)swapchaindesc.BufferDesc.Height, 0, 1 };
+		D3D11_VIEWPORT viewport = { 0, 0, (float)fb_desc.Width, (float)fb_desc.Height, 0, 1 };
 		devicecontext->RSSetViewports(1, &viewport);
+		devicecontext->RSSetState(rasterizerstate);
 
 		devicecontext->OMSetRenderTargets(1, &render_target_view, nullptr);
 
 		devicecontext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		devicecontext->IASetInputLayout(input_layout);
-		devicecontext->IASetVertexBuffers(0, 1, &vertex_buffer, &vertex_stride, &vertex_offset);
+		// devicecontext->IASetInputLayout(input_layout);
+		// devicecontext->IASetVertexBuffers(0, 1, &vertex_buffer, &vertex_stride, &vertex_offset);
+		devicecontext->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
 
 		devicecontext->VSSetShader(vertex_shader, nullptr, 0);
 		devicecontext->PSSetShader(pixel_shader, nullptr, 0);
 
-		devicecontext->Draw(vertex_count, 0);
+		devicecontext->Draw(3, 0);
 
 		swapchain->Present(1, 0);
 	}
 	return 0;
 }
+
