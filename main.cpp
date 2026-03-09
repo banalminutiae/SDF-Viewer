@@ -9,17 +9,16 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 
-LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
-{
+LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
     switch (message) {
-	    case WM_KEYDOWN:
-	        if (w_param == VK_ESCAPE) {
-    		    PostQuitMessage(0);
-		        return 0;
-	        }
-	    case WM_DESTROY:
-		    PostQuitMessage(0);
-            return 0;
+	case WM_KEYDOWN:
+	if (w_param == VK_ESCAPE) {
+		PostQuitMessage(0);
+		return 0;
+	}
+	case WM_DESTROY:
+	PostQuitMessage(0);
+	return 0;
     }
 
     return DefWindowProcA(window, message, w_param, l_param);
@@ -38,23 +37,23 @@ BOOL init_app(HINSTANCE instance) {
 
 int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, int show_code) {
 	if (!init_app(instance)) {
-		return FALSE;
+		return 0;
 	}
 
 	HWND window_handle = CreateWindowExA(
-        0,
-        "WindowClass",
-        "app",
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        0,
-        0,
-        instance,
-        0
-    );
+										 0,
+										 "WindowClass",
+										 "app",
+										 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+										 CW_USEDEFAULT,
+										 CW_USEDEFAULT,
+										 CW_USEDEFAULT,
+										 CW_USEDEFAULT,
+										 0,
+										 0,
+										 instance,
+										 0
+										 );
 
 	if (window_handle) {
 		ShowWindow(window_handle, show_code);
@@ -96,34 +95,14 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
 
 	ID3DBlob *vs_blob = nullptr, *ps_blob = nullptr, *err_blob = nullptr;
-	HRESULT vs_hr = D3DCompileFromFile(
-        L"shaders.hlsl",
-        nullptr,
-        D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "vs_main",
-        "vs_5_0",
-        flags,
-        0,
-        &vs_blob,
-        &err_blob
-    );
+	HRESULT vs_hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vs_main", "vs_5_0", flags, 0, &vs_blob, &err_blob);
 
 	if (FAILED(vs_hr)) {
 		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
 		if (vs_blob) vs_blob->Release();
 	}
 	
-	HRESULT ps_hr = D3DCompileFromFile(
-        L"shaders.hlsl",
-        nullptr,
-        D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "ps_main",
-        "ps_5_0",
-        flags,
-        0,
-        &ps_blob,
-        &err_blob
-    );
+	HRESULT ps_hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "ps_main", "ps_5_0", flags, 0, &ps_blob, &err_blob);
 
 	if (FAILED(ps_hr)) {
 		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
@@ -136,11 +115,6 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr, &vertex_shader);
 	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr, &pixel_shader);
 
-	ID3D11InputLayout* input_layout = nullptr;
-	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
-		{ "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-
 	//////////////////////////////////////////////////////////////////////////
 
 	D3D11_RASTERIZER_DESC rasterizerdesc = { D3D11_FILL_SOLID, D3D11_CULL_NONE }; 
@@ -148,6 +122,28 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
     ID3D11RasterizerState* rasterizerstate;
 
     device->CreateRasterizerState(&rasterizerdesc, &rasterizerstate);
+
+	//////////////////////////////////////////////////////////////////////////
+	
+	D3D11_TEXTURE2D_DESC fb_desc;
+	framebuffer->GetDesc(&fb_desc);
+	float constants[4] = { (float)fb_desc.Width / fb_desc.Height, 0, 0, 0 };
+
+	D3D11_BUFFER_DESC const_buf_desc= {0};
+	const_buf_desc.ByteWidth = (sizeof(constants) + 15) & ~15u; // constant buffer size must be multiple of 16
+    const_buf_desc.Usage     = D3D11_USAGE_IMMUTABLE; 
+    const_buf_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+    D3D11_SUBRESOURCE_DATA const_buf_srd = {0};
+	const_buf_srd.pSysMem = constants;
+
+    ID3D11Buffer* const_buf;
+
+    HRESULT cb_hr = device->CreateBuffer(&const_buf_desc, &const_buf_srd, &const_buf);
+
+	if (FAILED(cb_hr)) {
+		OutputDebugStringA("Failed to create constant buffer you fucking asshole");
+	}
 
 	MSG message;
 	for (;;) {
@@ -172,6 +168,8 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 		devicecontext->VSSetShader(vertex_shader, nullptr, 0);
 		devicecontext->PSSetShader(pixel_shader, nullptr, 0);
+		
+		devicecontext->VSSetConstantBuffers(0, 1, &const_buf);
 
 		devicecontext->Draw(3, 0);
 
