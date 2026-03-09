@@ -79,7 +79,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	ID3D11Device *device;
     ID3D11DeviceContext *devicecontext;
 
-	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT, featurelevels, ARRAYSIZE(featurelevels), D3D11_SDK_VERSION, &swapchaindesc, &swapchain, &device, nullptr, &devicecontext);
+	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG, featurelevels, ARRAYSIZE(featurelevels), D3D11_SDK_VERSION, &swapchaindesc, &swapchain, &device, nullptr, &devicecontext);
 
 	swapchain->GetDesc(&swapchaindesc);
 
@@ -127,7 +127,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	
 	D3D11_TEXTURE2D_DESC fb_desc;
 	framebuffer->GetDesc(&fb_desc);
-	float constants[4] = { (float)fb_desc.Width / fb_desc.Height, 0, 0, 0 };
+
+	float aspect_ratio = 1.78;// (float)fb_desc.Width / (float)fb_desc.Height
+	float constants[4] = { aspect_ratio, 0, 0, 0 };
 
 	D3D11_BUFFER_DESC const_buf_desc= {0};
 	const_buf_desc.ByteWidth = (sizeof(constants) + 15) & ~15u; // constant buffer size must be multiple of 16
@@ -142,9 +144,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
     HRESULT cb_hr = device->CreateBuffer(&const_buf_desc, &const_buf_srd, &const_buf);
 
 	if (FAILED(cb_hr)) {
-		OutputDebugStringA("Failed to create constant buffer you fucking asshole");
+		return 0;
 	}
-
+	
 	MSG message;
 	for (;;) {
 		BOOL result = GetMessage(&message, 0, 0, 0);
@@ -169,7 +171,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		devicecontext->VSSetShader(vertex_shader, nullptr, 0);
 		devicecontext->PSSetShader(pixel_shader, nullptr, 0);
 		
-		devicecontext->VSSetConstantBuffers(0, 1, &const_buf);
+		devicecontext->PSSetConstantBuffers(0, 1, &const_buf);
 
 		devicecontext->Draw(3, 0);
 

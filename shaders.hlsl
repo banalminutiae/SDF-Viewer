@@ -27,7 +27,7 @@ vs_out vs_main(uint vertexid : SV_VERTEXID) {
 float4 ps_main(vs_out input) : SV_TARGET {
 	float2 uv = input.uv;
 	uv = (uv * 2.0) - 1.0; // [-1 ,1]
-	uv.x *= aspect;
+	uv.x *= 1.78;
 
 	float d = sd_circle(uv, 0.6);
 	float aa = fwidth(d);
