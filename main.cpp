@@ -11,15 +11,17 @@
 
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
     switch (message) {
-	case WM_KEYDOWN:
-	if (w_param == VK_ESCAPE) {
-		PostQuitMessage(0);
-		return 0;
+	    case WM_KEYDOWN:
+	        if (w_param == VK_ESCAPE) {
+		        PostQuitMessage(0);
+		        return 0;
+	        }
+			break;
+	    case WM_DESTROY: {
+	       PostQuitMessage(0);
+	       return 0;
+        }
 	}
-	case WM_DESTROY:
-	PostQuitMessage(0);
-	return 0;
-    }
 
     return DefWindowProcA(window, message, w_param, l_param);
 }
