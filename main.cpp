@@ -128,7 +128,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	D3D11_TEXTURE2D_DESC fb_desc;
 	framebuffer->GetDesc(&fb_desc);
 
-	float aspect_ratio = 1.78;// (float)fb_desc.Width / (float)fb_desc.Height
+	float aspect_ratio = (float)fb_desc.Width / (float)fb_desc.Height;
 	float constants[4] = { aspect_ratio, 0, 0, 0 };
 
 	D3D11_BUFFER_DESC const_buf_desc= {0};

@@ -27,12 +27,12 @@ vs_out vs_main(uint vertexid : SV_VERTEXID) {
 float4 ps_main(vs_out input) : SV_TARGET {
 	float2 uv = input.uv;
 	uv = (uv * 2.0) - 1.0; // [-1 ,1]
-	uv.x *= 1.78;
+	uv.x *= aspect;
 
 	float d = sd_circle(uv, 0.6);
 	float aa = fwidth(d);
 	float edge = smoothstep( -aa, aa, -d ); // 1.0 inside, 0.0 outside
-	/* float wave = 0.5 + 0.5 * sin(d * 30.0 * 4.0); */
-	/* float3 col = lerp(float3(0.2,0.3,0.8), float3(1.0,0.6,0.2), wave); */
-	return input.col * edge;
+	float wave = 0.5 + 0.5 * sin(d * 30.0 * 4.0);
+	float3 col = lerp(float3(0.2,0.3,0.8), float3(1.0,0.6,0.2), wave);
+	return float4(col * edge, 1.0);
 }
