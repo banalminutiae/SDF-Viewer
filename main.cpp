@@ -8,6 +8,7 @@
 #include <windows.h>					
 #include <d3d11.h>
 #include <d3dcompiler.h>
+#include "file_watcher.cpp"
 
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
     switch (message) {
@@ -42,20 +43,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		return 0;
 	}
 
-	HWND window_handle = CreateWindowExA(
-										 0,
-										 "WindowClass",
-										 "app",
-										 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-										 CW_USEDEFAULT,
-										 CW_USEDEFAULT,
-										 CW_USEDEFAULT,
-										 CW_USEDEFAULT,
-										 0,
-										 0,
-										 instance,
-										 0
-										 );
+	HWND window_handle = CreateWindowExA(0, "WindowClass", "app", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, instance, 0);
 
 	if (window_handle) {
 		ShowWindow(window_handle, show_code);
@@ -148,7 +136,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	if (FAILED(cb_hr)) {
 		return 0;
 	}
-	
+
 	MSG message;
 	for (;;) {
 		BOOL result = GetMessage(&message, 0, 0, 0);
