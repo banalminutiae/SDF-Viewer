@@ -8,6 +8,11 @@
 #include <windows.h>					
 #include <d3d11.h>
 #include <d3dcompiler.h>
+
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_dx11.h"
+
 #include "file_watcher.cpp"
 
 ID3D11Device* device;
@@ -18,6 +23,13 @@ ID3D11PixelShader *pixel_shader = nullptr;
 
 void compile_shaders();
 
+
+/*
+TODO:
+- Real shader hot reloading by detecting file changes
+- Dear ImGui integration
+
+ */
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
 	switch (message) {
 	case WM_KEYDOWN:
