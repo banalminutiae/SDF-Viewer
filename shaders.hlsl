@@ -13,6 +13,15 @@ float sd_circle(float2 p, float r) {
 	return length(p) - r;
 }
 
+float sd_equilateral_triangle(float2 p, float r) {
+	const float k = sqrt(3.0);
+    p.x = abs(p.x);
+    p -= float2(0.5,0.5*k)*max(p.x+k*p.y,0.0);
+    p -= float2(clamp(p.x,-r,r),-r/k );
+    return length(p)*sign(-p.y);
+}
+
+
 vs_out vs_main(uint vertexid : SV_VERTEXID) {
 	float2 verts[3] = {
 	    float2(-1,-1), float2(3,-1), float2(-1,3)
@@ -29,7 +38,7 @@ float4 ps_main(vs_out input) : SV_TARGET {
 	uv = (uv * 2.0) - 1.0; // [-1 ,1]
 	uv.x *= aspect;
 
-	float d = sd_circle(uv, 0.5);
+	float d = sd_equilateral_triangle(uv, 0.5);
 
 	float3 col = d > 0.0 ? float3(0.9, 0.6, 0.3) : float3(0.5, 0.8, 1.0);
 	col *= 1.0 - exp(-0.6 * abs(d));
