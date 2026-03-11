@@ -129,25 +129,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 	//////////////////////////////////////////////////////////////////////////
 
-	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
-
-	ID3DBlob *vs_blob = nullptr, *ps_blob = nullptr, *err_blob = nullptr;
-	HRESULT vs_hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vs_main", "vs_5_0", flags, 0, &vs_blob, &err_blob);
-
-	if (FAILED(vs_hr)) {
-		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
-		if (vs_blob) vs_blob->Release();
-	}
-	
-	HRESULT ps_hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "ps_main", "ps_5_0", flags, 0, &ps_blob, &err_blob);
-
-	if (FAILED(ps_hr)) {
-		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
-		if (ps_blob) ps_blob->Release();
-	}
-
-	device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr, &vertex_shader);
-	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr, &pixel_shader);
+	compile_shaders();
 
 	//////////////////////////////////////////////////////////////////////////
 
