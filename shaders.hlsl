@@ -29,12 +29,12 @@ float4 ps_main(vs_out input) : SV_TARGET {
 	uv = (uv * 2.0) - 1.0; // [-1 ,1]
 	uv.x *= aspect;
 
-	float d = sd_circle(uv, 0.6);
-	float aa = fwidth(d);
-	float edge = smoothstep(-aa, aa, -d); // 1.0 inside, 0.0 outside
-	float wave = 0.5 + 0.5 * sin(d * 30.0 * 4.0); // TODO: Time delta thing
-	float3 pattern = edge == 0
-		? lerp(float3(0.2,0.3,0.8), float3(1.0,0.6,0.2), wave)
-		: lerp(float3(0.8, 0.6, 0.1), float3(0.1, 0.3, 0.8), wave);
-	return float4(pattern, 1.0);
+	float d = sd_circle(uv, 0.5);
+
+	float3 col = d > 0.0 ? float3(0.9, 0.6, 0.3) : float3(0.5, 0.8, 1.0);
+	col *= 1.0 - exp(-0.6 * abs(d));
+	col *= 0.8 + 0.2 * cos(150.0 * d);
+	col  = lerp(col, float3(1.0, 1.0, 1.0), 1.0 - smoothstep(0.0, 0.01, abs(d)));
+		
+	return float4(col, 1.0);
 }
