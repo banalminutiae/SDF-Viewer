@@ -10,20 +10,30 @@
 #include <d3dcompiler.h>
 #include "file_watcher.cpp"
 
-LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
-    switch (message) {
-	    case WM_KEYDOWN:
-	        if (w_param == VK_ESCAPE) {
-		        PostQuitMessage(0);
-		        return 0;
-	        }
-			break;
-	    case WM_DESTROY: {
-	       PostQuitMessage(0);
-	       return 0;
-        }
-	}
+ID3D11Device* device;
+ID3D11DeviceContext* devicecontext;
 
+ID3D11VertexShader *vertex_shader = nullptr;
+ID3D11PixelShader *pixel_shader = nullptr;
+
+void compile_shaders();
+
+LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
+	switch (message) {
+	case WM_KEYDOWN:
+		if (w_param == VK_ESCAPE) {
+			PostQuitMessage(0);
+			return 0;
+		}
+		if (w_param == VK_F5) {
+			compile_shaders();
+		}
+		break;
+	case WM_DESTROY: 
+		PostQuitMessage(0);
+		return 0;
+	}
+	
     return DefWindowProcA(window, message, w_param, l_param);
 }
 
@@ -36,6 +46,34 @@ BOOL init_app(HINSTANCE instance) {
 	wc.lpszClassName = "WindowClass";
 
 	return RegisterClass(&wc);	
+}
+
+void compile_shaders() {
+	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
+	
+	ID3DBlob *vs_blob = nullptr, *ps_blob = nullptr, *err_blob = nullptr;
+
+	devicecontext->VSSetShader(nullptr, nullptr, 0);
+	devicecontext->PSSetShader(nullptr, nullptr, 0);
+
+	HRESULT vs_hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vs_main", "vs_5_0", flags, 0, &vs_blob, &err_blob);
+	HRESULT ps_hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "ps_main", "ps_5_0", flags, 0, &ps_blob, &err_blob);
+
+	if (FAILED(vs_hr)) {
+		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
+		if (vs_blob) vs_blob->Release();
+	}
+	
+	if (FAILED(ps_hr)) {
+		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
+		if (ps_blob) ps_blob->Release();
+	}
+
+	device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr, &vertex_shader);
+	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr, &pixel_shader);
+
+	devicecontext->VSSetShader(vertex_shader, nullptr, 0);
+	devicecontext->PSSetShader(pixel_shader, nullptr, 0);
 }
 
 int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, int show_code) {
@@ -65,9 +103,6 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
     swapchaindesc.SwapEffect        = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
 	IDXGISwapChain *swapchain;
-	
-	ID3D11Device *device;
-    ID3D11DeviceContext *devicecontext;
 
 	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG, featurelevels, ARRAYSIZE(featurelevels), D3D11_SDK_VERSION, &swapchaindesc, &swapchain, &device, nullptr, &devicecontext);
 
@@ -98,9 +133,6 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());
 		if (ps_blob) ps_blob->Release();
 	}
-
-	ID3D11VertexShader *vertex_shader = nullptr;
-	ID3D11PixelShader *pixel_shader = nullptr;
 
 	device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr, &vertex_shader);
 	device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr, &pixel_shader);
@@ -141,6 +173,12 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	for (;;) {
 		BOOL result = GetMessage(&message, 0, 0, 0);
 		if (result <= 0) {
+			vertex_shader->Release();
+			pixel_shader->Release();
+			devicecontext->ClearState();
+			devicecontext->Flush();
+			devicecontext->Release();
+			devicecontext = nullptr;
 			break;
 		}
 		TranslateMessage(&message);
@@ -157,11 +195,11 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 		devicecontext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		devicecontext->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
-
-		devicecontext->VSSetShader(vertex_shader, nullptr, 0);
-		devicecontext->PSSetShader(pixel_shader, nullptr, 0);
 		
 		devicecontext->PSSetConstantBuffers(0, 1, &const_buf);
+		
+		devicecontext->VSSetShader(vertex_shader, nullptr, 0);
+		devicecontext->PSSetShader(pixel_shader, nullptr, 0);
 
 		devicecontext->Draw(3, 0);
 

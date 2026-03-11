@@ -36,6 +36,5 @@ float4 ps_main(vs_out input) : SV_TARGET {
 	float3 pattern = edge == 0
 		? lerp(float3(0.2,0.3,0.8), float3(1.0,0.6,0.2), wave)
 		: lerp(float3(0.8, 0.6, 0.1), float3(0.1, 0.3, 0.8), wave);
-		
 	return float4(pattern, 1.0);
 }
