@@ -15,6 +15,8 @@
 
 #include "file_watcher.cpp"
 
+WNDCLASS wc;
+
 ID3D11Device* device;
 ID3D11DeviceContext* devicecontext;
 
@@ -23,14 +25,13 @@ ID3D11PixelShader *pixel_shader = nullptr;
 
 void compile_shaders();
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-/*
-TODO:
-- Real shader hot reloading by detecting file changes
-- Dear ImGui integration
-
- */
+// TODO: Resolve ImGui linking issues, fix build system
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
+	if (ImGui_ImplWin32_WndProcHandler(window, message, w_param, l_param))
+		return true;
+
 	switch (message) {
 	case WM_KEYDOWN:
 		if (w_param == VK_ESCAPE) {
@@ -50,7 +51,7 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l
 }
 
 BOOL init_app(HINSTANCE instance) {
-	WNDCLASS wc = {0};
+	wc = {0};
 	wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = window_proc;
 	wc.hInstance = instance;
@@ -89,6 +90,9 @@ void compile_shaders() {
 }
 
 int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, int show_code) {
+	 ImGui_ImplWin32_EnableDpiAwareness();
+	 float main_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(::MonitorFromPoint(POINT{ 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
+
 	if (!init_app(instance)) {
 		return 0;
 	}
@@ -163,6 +167,25 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		return 0;
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+
+	IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;    
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+	ImGui::StyleColorsDark();
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.ScaleAllSizes(main_scale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+
+	ImGui_ImplWin32_Init(window_handle);
+	ImGui_ImplDX11_Init(device, devicecontext);
+	
+	//////////////////////////////////////////////////////////////////////////
+	
+	bool show_demo_window = true;
+	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	MSG message;
 	for (;;) {
 		BOOL result = GetMessage(&message, 0, 0, 0);
@@ -178,6 +201,32 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		TranslateMessage(&message);
 		DispatchMessage(&message);
 
+		ImGui_ImplDX11_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+
+		if (show_demo_window) {
+			ImGui::ShowDemoWindow(&show_demo_window);
+		}
+
+		static float f = 0.0f;
+		static int counter = 0;
+		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+
+		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+			counter++;
+		ImGui::SameLine();
+		ImGui::Text("counter = %d", counter);
+
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		ImGui::End();
+
 		D3D11_TEXTURE2D_DESC fb_desc;
 		framebuffer->GetDesc(&fb_desc);
 
@@ -185,7 +234,11 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		devicecontext->RSSetViewports(1, &viewport);
 		devicecontext->RSSetState(rasterizerstate);
 
+		ImGui::Render();
+
 		devicecontext->OMSetRenderTargets(1, &render_target_view, nullptr);
+
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 		devicecontext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		devicecontext->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
@@ -199,5 +252,13 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 		swapchain->Present(1, 0);
 	}
+
+	ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
+	::DestroyWindow(window_handle);
+    ::UnregisterClassW((LPCWSTR)wc.lpszClassName, wc.hInstance);
+	
 	return 0;
 }
