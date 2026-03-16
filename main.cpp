@@ -27,7 +27,6 @@ void compile_shaders();
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-// TODO: Resolve ImGui linking issues, fix build system
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
 	if (ImGui_ImplWin32_WndProcHandler(window, message, w_param, l_param))
 		return true;
@@ -233,12 +232,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		D3D11_VIEWPORT viewport = { 0, 0, (float)fb_desc.Width, (float)fb_desc.Height, 0, 1 };
 		devicecontext->RSSetViewports(1, &viewport);
 		devicecontext->RSSetState(rasterizerstate);
-
-		ImGui::Render();
-
 		devicecontext->OMSetRenderTargets(1, &render_target_view, nullptr);
-
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 		devicecontext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		devicecontext->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
@@ -249,6 +243,10 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		devicecontext->PSSetShader(pixel_shader, nullptr, 0);
 
 		devicecontext->Draw(3, 0);
+
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
 
 		swapchain->Present(1, 0);
 	}
