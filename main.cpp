@@ -8,6 +8,7 @@
 #include <windows.h>					
 #include <d3d11.h>
 #include <d3dcompiler.h>
+#include <directxmath.h>
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
@@ -147,8 +148,16 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	D3D11_TEXTURE2D_DESC fb_desc;
 	framebuffer->GetDesc(&fb_desc);
 
-	float aspect_ratio = (float)fb_desc.Width / (float)fb_desc.Height;
-	float constants[4] = { aspect_ratio, 0, 0, 0 };
+	struct CB_Constants {
+		float aspect;
+		float interior[3] = {0.0, 0.0, 1.0};
+		float exterior[3] = {0.9, 0.6, 0.3};
+		float pad;
+	};
+
+	CB_Constants constants;
+	constants.aspect = (float)fb_desc.Width / (float)fb_desc.Height;
+	constants.pad = 0;
 
 	D3D11_BUFFER_DESC const_buf_desc= {0};
 	const_buf_desc.ByteWidth = (sizeof(constants) + 15) & ~15u; // constant buffer size must be multiple of 16
@@ -156,7 +165,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
     const_buf_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
     D3D11_SUBRESOURCE_DATA const_buf_srd = {0};
-	const_buf_srd.pSysMem = constants;
+	const_buf_srd.pSysMem = &constants;
 
     ID3D11Buffer* const_buf;
 
@@ -183,8 +192,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	
 	//////////////////////////////////////////////////////////////////////////
 	
-	bool show_demo_window = true;
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	bool show_demo_window = false;
+	ImVec4 interior_color = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
+	ImVec4 exterior_color = ImVec4(0.9f, 0.6f, 0.3f, 1.0f);
 	MSG message;
 	for (;;) {
 		BOOL result = GetMessage(&message, 0, 0, 0);
@@ -210,13 +220,12 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 		static float f = 0.0f;
 		static int counter = 0;
-		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+		ImGui::Begin("Editor");
 
-		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+		ImGui::Checkbox("Demo Window", &show_demo_window);      
 
-		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+		ImGui::ColorEdit3("Interior Color", (float*)&interior_color);
+		ImGui::ColorEdit3("Exterior Color", (float*)&exterior_color);
 
 		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
 			counter++;
@@ -246,7 +255,6 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
 
 		swapchain->Present(1, 0);
 	}

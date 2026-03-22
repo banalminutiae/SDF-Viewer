@@ -1,6 +1,8 @@
 cbuffer FrameCB : register(b0) {
 	float aspect;
-	float3 _pad;
+	float3 interior_color;
+	float3 exterior_color;
+	float _pad;
 }
 
 struct vs_out {
@@ -40,7 +42,8 @@ float4 ps_main(vs_out input) : SV_TARGET {
 
 	float d = sd_equilateral_triangle(uv, 0.5);
 
-	float3 col = d > 0.0 ? float3(0.9, 0.6, 0.3) : float3(0.0, 0.0, 1.0);
+	/* float3 col = d > 0.0 ? float3(0.9, 0.6, 0.3) : float3(0.0, 0.0, 1.0); */
+	float3 col = d > 0.0 ? exterior_color : interior_color;
 	col *= 1.0 - exp(-0.6 * abs(d));
 	col *= 0.8 + 0.2 * cos(150.0 * d);
 	col  = lerp(col, float3(1.0, 1.0, 1.0), 1.0 - smoothstep(0.0, 0.01, abs(d)));
