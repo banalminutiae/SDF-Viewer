@@ -29,7 +29,7 @@ vs_out vs_main(uint vertexid : SV_VERTEXID) {
 	    float2(-1,-1), float2(3,-1), float2(-1,3)
 	};
 	vs_out o;
-	o.col = float4( vertexid == 0, vertexid == 1, vertexid == 2, 1 );
+	o.col = float4(vertexid == 0, vertexid == 1, vertexid == 2, 1);
 	o.pos = float4(verts[vertexid], 0, 1);
 	o.uv  = 0.5 * (verts[vertexid] + 1.0); // map [-1,1] -> [0,1]
 	return o;
@@ -42,7 +42,6 @@ float4 ps_main(vs_out input) : SV_TARGET {
 
 	float d = sd_equilateral_triangle(uv, 0.5);
 
-	/* float3 col = d > 0.0 ? float3(0.9, 0.6, 0.3) : float3(0.0, 0.0, 1.0); */
 	float3 col = d > 0.0 ? exterior_color : interior_color;
 	col *= 1.0 - exp(-0.6 * abs(d));
 	col *= 0.8 + 0.2 * cos(150.0 * d);

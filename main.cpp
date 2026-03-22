@@ -28,9 +28,6 @@ void compile_shaders();
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-float interior_color[3] = {0.0, 0.0, 1.0};
-float exterior_color[3] = {0.9, 0.6, 0.3};
-
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
 	if (ImGui_ImplWin32_WndProcHandler(window, message, w_param, l_param))
 		return true;
@@ -157,6 +154,9 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		float exterior[3];
 		float pad;
 	};
+
+	float interior_color[3] = {0.0, 0.0, 1.0};
+	float exterior_color[3] = {0.9, 0.6, 0.3};
 
 	CB_Constants constants;
 	constants.aspect = (float)fb_desc.Width / (float)fb_desc.Height;
