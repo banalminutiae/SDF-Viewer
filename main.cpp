@@ -28,6 +28,9 @@ void compile_shaders();
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+float interior_color[3] = {0.0, 0.0, 1.0};
+float exterior_color[3] = {0.9, 0.6, 0.3};
+
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
 	if (ImGui_ImplWin32_WndProcHandler(window, message, w_param, l_param))
 		return true;
@@ -150,26 +153,26 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 	struct CB_Constants {
 		float aspect;
-		float interior[3] = {0.0, 0.0, 1.0};
-		float exterior[3] = {0.9, 0.6, 0.3};
+		float interior[3];
+		float exterior[3];
 		float pad;
 	};
 
 	CB_Constants constants;
 	constants.aspect = (float)fb_desc.Width / (float)fb_desc.Height;
+	memcpy(constants.interior, interior_color, sizeof(interior_color));
+	memcpy(constants.exterior, exterior_color, sizeof(exterior_color));
 	constants.pad = 0;
 
 	D3D11_BUFFER_DESC const_buf_desc= {0};
 	const_buf_desc.ByteWidth = (sizeof(constants) + 15) & ~15u; // constant buffer size must be multiple of 16
-    const_buf_desc.Usage     = D3D11_USAGE_IMMUTABLE; 
+    const_buf_desc.Usage     = D3D11_USAGE_DYNAMIC; 
     const_buf_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	const_buf_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-    D3D11_SUBRESOURCE_DATA const_buf_srd = {0};
-	const_buf_srd.pSysMem = &constants;
+	ID3D11Buffer* const_buf = nullptr;
 
-    ID3D11Buffer* const_buf;
-
-    HRESULT cb_hr = device->CreateBuffer(&const_buf_desc, &const_buf_srd, &const_buf);
+	HRESULT cb_hr = device->CreateBuffer(&const_buf_desc, nullptr, &const_buf);
 
 	if (FAILED(cb_hr)) {
 		return 0;
@@ -193,8 +196,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	//////////////////////////////////////////////////////////////////////////
 	
 	bool show_demo_window = false;
-	ImVec4 interior_color = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
-	ImVec4 exterior_color = ImVec4(0.9f, 0.6f, 0.3f, 1.0f);
+
 	MSG message;
 	for (;;) {
 		BOOL result = GetMessage(&message, 0, 0, 0);
@@ -224,16 +226,21 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 
 		ImGui::Checkbox("Demo Window", &show_demo_window);      
 
-		ImGui::ColorEdit3("Interior Color", (float*)&interior_color);
-		ImGui::ColorEdit3("Exterior Color", (float*)&exterior_color);
+		ImGui::ColorEdit3("Interior Color", (float*)&constants.interior);
+		ImGui::ColorEdit3("Exterior Color", (float*)&constants.exterior);
 
-		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+		if (ImGui::Button("Button"))                     
 			counter++;
 		ImGui::SameLine();
 		ImGui::Text("counter = %d", counter);
 
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::End();
+
+		D3D11_MAPPED_SUBRESOURCE mapped;
+		devicecontext->Map(const_buf, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+		memcpy(mapped.pData, &constants, sizeof(constants));
+		devicecontext->Unmap(const_buf, 0);
 
 		D3D11_TEXTURE2D_DESC fb_desc;
 		framebuffer->GetDesc(&fb_desc);
