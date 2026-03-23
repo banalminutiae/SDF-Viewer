@@ -16,6 +16,11 @@
 
 #include "file_watcher.cpp"
 
+/**
+TODO:
+- Clean up build system, emit compilation results to build file and remove from version control
+ */
+
 WNDCLASS wc;
 
 ID3D11Device* device;
@@ -148,21 +153,23 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	D3D11_TEXTURE2D_DESC fb_desc;
 	framebuffer->GetDesc(&fb_desc);
 
+	enum Shape { CIRCLE = 0, TRIANGLE = 1};
+
 	struct CB_Constants {
 		float aspect;
 		float interior[3];
 		float exterior[3];
-		float pad;
+		Shape shape;
 	};
 
-	float interior_color[3] = {0.0, 0.0, 1.0};
+	float interior_color[3] = {0.65,0.85,1.0};
 	float exterior_color[3] = {0.9, 0.6, 0.3};
 
 	CB_Constants constants;
 	constants.aspect = (float)fb_desc.Width / (float)fb_desc.Height;
 	memcpy(constants.interior, interior_color, sizeof(interior_color));
 	memcpy(constants.exterior, exterior_color, sizeof(exterior_color));
-	constants.pad = 0;
+	constants.shape = CIRCLE;
 
 	D3D11_BUFFER_DESC const_buf_desc= {0};
 	const_buf_desc.ByteWidth = (sizeof(constants) + 15) & ~15u; // constant buffer size must be multiple of 16
@@ -229,11 +236,14 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		ImGui::ColorEdit3("Interior Color", (float*)&constants.interior);
 		ImGui::ColorEdit3("Exterior Color", (float*)&constants.exterior);
 
-		if (ImGui::Button("Button"))                     
-			counter++;
+		if (ImGui::Button("Circle")) {
+			constants.shape = CIRCLE;
+		}
 		ImGui::SameLine();
-		ImGui::Text("counter = %d", counter);
-
+		if (ImGui::Button("Triangle")) {
+			constants.shape = TRIANGLE;
+		}
+		
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::End();
 
