@@ -153,7 +153,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	D3D11_TEXTURE2D_DESC fb_desc;
 	framebuffer->GetDesc(&fb_desc);
 
-	enum Shape { CIRCLE = 0, TRIANGLE = 1};
+	enum Shape { CIRCLE = 0, TRIANGLE = 1, BOX = 2 };
 
 	struct CB_Constants {
 		float aspect;
@@ -242,6 +242,10 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		ImGui::SameLine();
 		if (ImGui::Button("Triangle")) {
 			constants.shape = TRIANGLE;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Box")) {
+			constants.shape = BOX;
 		}
 		
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
