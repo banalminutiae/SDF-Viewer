@@ -19,6 +19,7 @@
 /**
 TODO:
 - Clean up build system, emit compilation results to build file and remove from version control
+- GUI editing of shape dimensions
  */
 
 WNDCLASS wc;
@@ -153,7 +154,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 	D3D11_TEXTURE2D_DESC fb_desc;
 	framebuffer->GetDesc(&fb_desc);
 
-	enum Shape { CIRCLE = 0, TRIANGLE = 1, BOX = 2 };
+	enum Shape { CIRCLE = 0, TRIANGLE = 1, BOX = 2, UNION = 3, SUBTRACTION = 4, INTERSECTION = 5, XOR = 6 };
 
 	struct CB_Constants {
 		float aspect;
@@ -246,6 +247,22 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line
 		ImGui::SameLine();
 		if (ImGui::Button("Box")) {
 			constants.shape = BOX;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Union")) {
+			constants.shape = UNION;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Subtraction")) {
+			constants.shape = SUBTRACTION;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Intersection")) {
+			constants.shape = INTERSECTION;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Xor")) {
+			constants.shape = XOR;
 		}
 		
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
