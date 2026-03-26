@@ -9,7 +9,7 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <directxmath.h>
-
+#include <string.h>
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_impl_dx11.h"
@@ -18,8 +18,8 @@
 
 /**
 TODO:
-- Clean up build system, emit compilation results to build file and remove from version control
-- GUI editing of shape dimensions
+- Robust handling of shader file paths so exe can be run from anywhere
+- GUI editing of shape dimensions?
  */
 
 WNDCLASS wc;
