@@ -20,6 +20,7 @@
 TODO:
 - Robust handling of shader file paths so exe can be run from anywhere
 - GUI editing of shape dimensions?
+- Finish implementing file watcher for real time shader hot reload
  */
 
 WNDCLASS wc;
