@@ -76,8 +76,8 @@ void compile_shaders() {
 	devicecontext->VSSetShader(nullptr, nullptr, 0);
 	devicecontext->PSSetShader(nullptr, nullptr, 0);
 
-	HRESULT vs_hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vs_main", "vs_5_0", flags, 0, &vs_blob, &err_blob);
-	HRESULT ps_hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "ps_main", "ps_5_0", flags, 0, &ps_blob, &err_blob);
+	HRESULT vs_hr = D3DCompileFromFile(L"vertex.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vs_main", "vs_5_0", flags, 0, &vs_blob, &err_blob);
+	HRESULT ps_hr = D3DCompileFromFile(L"pixel.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "ps_main", "ps_5_0", flags, 0, &ps_blob, &err_blob);
 
 	if (FAILED(vs_hr)) {
 		if (err_blob) OutputDebugStringA((char*)err_blob->GetBufferPointer());

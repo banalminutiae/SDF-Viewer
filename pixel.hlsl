@@ -1,15 +1,4 @@
-cbuffer FrameCB : register(b0) {
-	float aspect;
-	float3 interior_color;
-	float3 exterior_color;
-	int shape;
-}
-
-struct vs_out {
-	float4 pos : SV_POSITION;
-	float4 col : COLOR0;
-	float2 uv  : TEXCOORD0;
-};
+#include "common.hlsli"
 
 float sd_circle(float2 p, float r) {
 	return length(p) - r;
@@ -55,17 +44,6 @@ float sd_xor(float2 p) {
 	float box = sd_box(p, float2(0.5, 0.5));
 
 	return max(min(box, circle), -max(box, circle));
-}
-
-vs_out vs_main(uint vertexid : SV_VERTEXID) {
-	float2 verts[3] = {
-	    float2(-1,-1), float2(3,-1), float2(-1,3)
-	};
-	vs_out o;
-	o.col = float4(vertexid == 0, vertexid == 1, vertexid == 2, 1);
-	o.pos = float4(verts[vertexid], 0, 1);
-	o.uv  = 0.5 * (verts[vertexid] + 1.0); // map [-1,1] -> [0,1]
-	return o;
 }
 
 float4 ps_main(vs_out input) : SV_TARGET {
